@@ -1,0 +1,676 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AI-Tree — How special am I?</title>
+<style>
+:root{
+  --bg1:#05060a; --bg2:#071122;
+  --neon-cyan:#00e6ff; --neon-pink:#ff2d95; --neon-green:#7dff8a;
+  --card: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  --text:#d8f5ff;
+  font-family: Inter, "Segoe UI", Roboto, system-ui, -apple-system, "Helvetica Neue", Arial;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:
+  radial-gradient(900px 300px at 8% 10%, rgba(0,230,255,0.03), transparent),
+  linear-gradient(180deg,var(--bg1),var(--bg2));
+  color:var(--text);-webkit-font-smoothing:antialiased;}
+.container{max-width:1200px;margin:24px auto;padding:18px;border-radius:14px;backdrop-filter:blur(8px);box-shadow:0 18px 70px rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.03)}
+.header{display:flex;gap:12px;align-items:center}
+.logo{width:78px;height:78px;border-radius:12px;background:linear-gradient(135deg,var(--neon-pink),var(--neon-cyan));display:flex;align-items:center;justify-content:center;color:#03040a;font-weight:800;font-size:20px;box-shadow:0 12px 40px rgba(0,0,0,.6)}
+h1{margin:0;font-size:20px}
+.lead{margin:6px 0 10px;opacity:.92}
+.layout{display:grid;grid-template-columns:1fr 420px;gap:16px;margin-top:16px}
+.card{background:var(--card);padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04)}
+.row{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+input[type=number],select,input[type=text]{flex:1;padding:9px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.06);color:inherit;font-size:14px}
+.btn{padding:10px 14px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--neon-pink),var(--neon-cyan));color:#03040a;font-weight:800;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,0.45)}
+.btn.ghost{background:transparent;border:1px solid rgba(0,230,255,0.12);color:var(--neon-cyan)}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.muted{opacity:.8;font-size:13px}
+.sectionToggle{cursor:pointer;color:var(--neon-cyan);font-weight:700}
+.collapse{max-height:0;overflow:hidden;transition:max-height .45s cubic-bezier(.2,.9,.2,1)}
+.collapse.open{max-height:2600px; /* big enough */}
+
+/* results */
+#resultsPanel{margin-top:12px;border-radius:12px;padding:12px;transform:translateY(30px) scale(.98);opacity:0;transition:all 700ms cubic-bezier(.2,.9,.2,1);box-shadow:0 18px 80px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.03);background:linear-gradient(180deg, rgba(0,0,0,0.35), rgba(255,255,255,0.01));}
+#resultsPanel.visible{transform:translateY(0) scale(1);opacity:1}
+.resultsGrid{display:grid;grid-template-columns:1fr 320px;gap:12px}
+.metricCard{background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);margin-bottom:10px}
+.bar{height:12px;border-radius:10px;background:linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));overflow:hidden;border:1px solid rgba(255,255,255,0.03)}
+.bar-inner{height:100%;width:0;border-radius:10px;transition:width 1000ms cubic-bezier(.2,.9,.2,1);box-shadow:0 8px 20px rgba(0,0,0,0.5)}
+.donut{width:140px;height:140px}
+.centerPct{font-weight:900;font-size:20px;margin-top:8px}
+.message{margin-top:10px;padding:10px;border-radius:8px;text-align:center}
+.league{font-weight:900;margin-top:6px}
+.actions{display:flex;gap:8px;justify-content:center;margin-top:10px}
+
+/* responsive */
+@media(max-width:1000px){.layout{grid-template-columns:1fr}.resultsGrid{grid-template-columns:1fr}}
+.small{font-size:12px;opacity:.9}
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">AI</div>
+      <div>
+        <h1>How special am I? - AI</h1>
+        <div class="lead">Artificial intelligence based on a tree model that examines you with valid data from physical, academic and daily aspects to understand how special you really are in humanity? (Keep in mind that being special may not mean being superior)<a href="https://GitHub.com/mr-r0ot">Coded by Mohammad Taha Gorji</a></div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <!-- left: inputs -->
+      <div>
+        <div class="card">
+          <h3 class="small neon">Profile</h3>
+          <div class="row"><label style="min-width:110px">Gender</label>
+            <select id="gender"><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select></div>
+          <div class="row"><label style="min-width:110px">Age</label><input id="age" type="number" min="10" max="120" value="30"></div>
+          <p class="small muted">Age & gender will influence baselines when available.</p>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <h3 class="small neon">Questions</h3>
+
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div class="small">Academic & Scientific (30)</div>
+              <div class="sectionToggle" data-target="acad">Toggle</div>
+            </div>
+            <div id="acad" class="collapse open"></div>
+          </div>
+
+          <div style="margin-top:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div class="small">Physical (40)</div>
+              <div class="sectionToggle" data-target="phys">Toggle</div>
+            </div>
+            <div id="phys" class="collapse open"></div>
+          </div>
+
+          <div style="margin-top:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div class="small">Daily Habits (50)</div>
+              <div class="sectionToggle" data-target="daily">Toggle</div>
+            </div>
+            <div id="daily" class="collapse open"></div>
+          </div>
+
+          <div class="controls">
+            <button id="calcShowBtn" class="btn">Calculate & Show Results</button>
+            <button id="resetBtn" class="btn ghost">Reset</button>
+          </div>
+          <p class="small muted" style="margin-top:8px">All metrics live in the `baselines` object in the script and are editable. Results are weighted average across metrics (default weight=1 each).</p>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <h4 class="small neon">Notes</h4>
+          <p class="small">Baselines are realistic approximations using global-level indicators. For highest accuracy, replace baselines with country/cohort-specific sources (UNESCO, OECD, ITU, national stats).</p>
+        </div>
+      </div>
+
+      <!-- right: results -->
+      <div>
+        <div id="resultsPanel">
+          <div class="resultsGrid">
+            <div>
+              <div class="card">
+                <h4 class="small neon">Detailed Metrics</h4>
+                <div id="resultsList" style="margin-top:8px;max-height:520px;overflow:auto;padding-right:6px"></div>
+              </div>
+
+              <div class="card" style="margin-top:10px">
+                <h4 class="small neon">Category Tree</h4>
+                <div id="tree" style="margin-top:8px"></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="card" style="display:flex;flex-direction:column;align-items:center;gap:12px">
+                <h4 class="small neon">Overall Specialty</h4>
+                <div style="display:flex;flex-direction:column;align-items:center">
+                  <svg class="donut" viewBox="0 0 42 42">
+                    <defs>
+                      <linearGradient id="gGrad" x1="0" x2="1"><stop offset="0%" stop-color="#00e6ff"/><stop offset="100%" stop-color="#ff2d95"/></linearGradient>
+                    </defs>
+                    <circle r="15.75" cx="21" cy="21" fill="transparent" stroke="rgba(255,255,255,0.03)" stroke-width="6"></circle>
+                    <circle r="15.75" cx="21" cy="21" fill="transparent" stroke="url(#gGrad)" stroke-width="6" stroke-dasharray="0 100" stroke-linecap="round" transform="rotate(-90 21 21)" id="donutArc"></circle>
+                  </svg>
+                  <div class="centerPct" id="overallPct">0%</div>
+                </div>
+
+                <div id="messageBox" class="message small">No results yet.</div>
+                <div id="leagueBadge" class="league small">League: —</div>
+
+                <div class="actions">
+                  <button id="downloadBtn" class="btn ghost">Download Image</button>
+                  <button id="shareBtn" class="btn" style="background:linear-gradient(90deg,var(--neon-green),var(--neon-cyan));color:#021217">Share</button>
+                </div>
+              </div>
+
+              <div class="card" style="margin-top:10px">
+                <h4 class="small neon">Export</h4>
+                <p class="small">Download creates a PNG snapshot which includes your donut, top metrics, message and league.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:8px" class="small muted">Tip: use the toggles to collapse sections if the form seems long.</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ---------------------------
+   Helper generators for CDF shapes (to keep baselines compact)
+   --------------------------- */
+function makeCDF(pairs){
+  // pairs = [[t,p],[t,p],...]; p in 0..1
+  return pairs.map(([t,p])=>({t,p}));
+}
+function rareCountCDF(){ return makeCDF([[0,0.995],[1,0.998],[5,0.9998]]); }
+function commonCountCDF(){ return makeCDF([[0,0.3],[1,0.6],[3,0.8],[6,0.9],[12,0.97]]); }
+function moderateCDF(){ return makeCDF([[0,0.5],[1,0.75],[5,0.9],[10,0.97]]); }
+function yesProb(p){ return [{t:0,p:p}]; } // for yes/no traits: p = proportion who have it
+
+/* ---------------------------
+   Build baselines object with many metrics
+   (30 academic, 40 physical, 50 daily) — generated programmatically
+   --------------------------- */
+const baselines = { metrics: {}, categories: [] };
+
+// academic/scientific metrics (30)
+const academicList = [
+  ['education','Highest education','select',['none','secondary','bachelor','master','phd']],
+  ['literacy','Basic literacy (can read/write)','select',['no','yes']],
+  ['tertiary','Has tertiary degree','select',['no','yes']],
+  ['stem_grad','Tertiary STEM degree','select',['no','yes']],
+  ['phd','Has PhD','select',['no','yes']],
+  ['publications','Peer-reviewed publications (lifetime)','number'],
+  ['h_index','Approx. h-index','number'],
+  ['citations','Academic citations (total)','number'],
+  ['grants','Research grants won (count)','number'],
+  ['patents','Granted patents (count)','number'],
+  ['conferences','Conference presentations (count)','number'],
+  ['collabs','International collaborations (count)','number'],
+  ['research_role','Works in R&D','select',['no','yes']],
+  ['top_journal','Published in top-tier journal','select',['no','yes']],
+  ['editorial','Journal editorial role (ever)','select',['no','yes']],
+  ['awards','Research awards (count)','number'],
+  ['projects','Completed research projects','number'],
+  ['datasets','Published datasets (count)','number'],
+  ['supervise','Supervised students (count)','number'],
+  ['teach_uni','Taught university course (ever)','select',['no','yes']],
+  ['open_source','Open-source scientific code repos','number'],
+  ['grants_amount','Research grant total (approx USD thousands)','number'],
+  ['field_years','Years active in field','number'],
+  ['researchers_density','Live in high researchers-density region','select',['no','yes']],
+  ['peer_reviewed','Reviewed for journals (count)','number'],
+  ['undergrad_gpa','Undergrad GPA (out of 4)','number'],
+  ['moocs','MOOCs completed','number'],
+  ['patents_team','Part of patent team (ever)','select',['no','yes']],
+  ['startup_founder','Founded research startup (ever)','select',['no','yes']]
+];
+
+// add to baselines.metrics with reasonable cdfs
+academicList.forEach(([key,label,type,opts])=>{
+  if(type==='number'){
+    let cdf;
+    if(key==='publications' || key==='citations' || key==='h_index' || key==='grants' || key==='patents' || key==='projects' || key==='datasets'){
+      cdf = rareCountCDF();
+    } else if(key==='field_years' || key==='undergrad_gpa'){
+      cdf = moderateCDF();
+    } else {
+      cdf = commonCountCDF();
+    }
+    baselines.metrics[key] = { key, label, inputType:'number', unit: type==='number' ? '' : '', default: cdf, weight:1 };
+  } else if(type==='select'){
+    if(key==='education'){
+      baselines.metrics[key] = { key, label, inputType:'select', options:opts,
+        // default mapping: proportion at-or-below each level (illustrative)
+        defaultMapping: { none:0.24, secondary:0.70, bachelor:0.81, master:0.89, phd:0.975 }, weight:1 };
+    } else if(key==='literacy'){
+      baselines.metrics[key] = { key,label,inputType:'select',options:opts, default: yesProb(0.87), weight:1 };
+    } else if(key==='research_role'){
+      baselines.metrics[key] = { key,label,inputType:'select',options:opts, default: yesProb(0.0015), weight:1 };
+    } else {
+      // general yes/no rare
+      baselines.metrics[key] = { key,label,inputType:'select',options:opts, default: yesProb(0.02), weight:1 };
+    }
+  }
+});
+
+// physical metrics (40)
+const physicalList = [
+  'pushups_max','pullups_max','bench_1rm','squat_1rm','deadlift_1rm','run_1km_time_sec','run_5km_min','run_10km_min',
+  'run_30min','swim_pool_lengths','cycle_20min_power','vo2_est','vertical_jump_cm','flexibility_cm','body_fat_pct',
+  'bmi','resting_hr','sprint_100m_sec','agility_ms','balance_sec','handgrip_kg','plank_sec','situps_1min',
+  'burpees_1min','steps_per_day','exercise_sessions_per_week','sports_hours_per_week','yoga_sessions','climb_levels',
+  'sled_push','farmer_carry_kg','rope_climb','stairs_climbed_per_day','max_holds_pullups','tuck_hold_sec','overhead_press_1rm',
+  'pushups_per_min','kettlebell_swings_1min','swim_100m_time','rowing_2k_time','recovery_hr_after1min'
+];
+
+physicalList.forEach(key=>{
+  // assign label heuristically
+  const label = key.replace(/_/g,' ').replace(/\b\w/g,ch=>ch.toUpperCase());
+  let cdf;
+  // pick distribution type
+  if(/1rm|max|kg|power|time|cm|pct|hr|sec|min|per_day|per_week|count|sessions|steps/.test(key)){
+    // variety: mostly common for steps/exercise, rare for heavy lifts
+    if(/bench|squat|deadlift|overhead|deadlift|farmer|sled|kettlebell|rope|carry/.test(key)) cdf = rareCountCDF();
+    else if(/steps|exercise_sessions|sports_hours|steps_per_day|stairs_climbed/.test(key)) cdf = commonCountCDF();
+    else cdf = moderateCDF();
+  } else cdf = moderateCDF();
+  baselines.metrics[key] = { key, label, inputType:'number', unit:'', default: cdf, weight:1 };
+});
+
+// daily habits (50)
+const dailyList = [
+ 'reading_hours_day','walking_hours_day','screen_hours_day','sleep_hours','meditation_min_day','coffee_cups_day',
+ 'water_liters_day','social_media_hours','tv_hours','commute_hours','productive_hours_day','work_hours_day',
+ 'snacks_per_day','veg_servings_day','fruit_servings_day','alcohol_drinks_week','smoking_cigs_day',
+ 'study_hours_day','language_study_week','coding_hours_week','side_project_hours_week','volunteer_hours_month',
+ 'time_with_family_hours_day','music_practice_hours_week','creative_hours_week','gardening_hours_week','chores_hours_day',
+ 'shopping_hours_week','gaming_hours_week','podcast_hours_week','news_minutes_day','email_hours_day','meetings_hours_day',
+ 'walking_steps_day','bike_minutes_week','gym_minutes_week','stretch_minutes_day','hobbies_hours_week','driving_km_day',
+ 'reading_books_year','movies_per_month','phone_unlocked_times_day','online_courses_enrolled','doctor_visits_year'
+];
+
+dailyList.forEach(key=>{
+  const label = key.replace(/_/g,' ').replace(/\b\w/g,ch=>ch.toUpperCase());
+  let cdf;
+  if(/hours|minutes|min|day|week|year|per_day|per_week|per_month|steps/.test(key)){
+    cdf = commonCountCDF();
+  } else cdf = moderateCDF();
+  baselines.metrics[key] = { key, label, inputType:'number', unit:'', default:cdf, weight:1 };
+});
+
+/* categories grouping (simple) */
+baselines.categories = [
+  { name:'Academic', metrics: Object.keys(baselines.metrics).filter(k=>academicList.some(a=>a[0]===k)).map(k=>({k,w:1})) },
+  { name:'Physical', metrics: physicalList.map(k=>({k,w:1})) },
+  { name:'Daily Habits', metrics: dailyList.map(k=>({k,w:1})) }
+];
+
+/* ---------------------------
+   UI build: populate sections with inputs
+   --------------------------- */
+function makeInputFor(m){
+  const id = 'input_' + m.key;
+  if(m.inputType === 'number') return `<input type="number" id="${id}" value="0" />`;
+  if(m.inputType === 'select'){
+    return `<select id="${id}">${(m.options||[]).map(o=>`<option value="${o}">${o}</option>`).join('')}</select>`;
+  }
+  return `<input type="text" id="${id}" />`;
+}
+
+function buildSections(){
+  const acad = document.getElementById('acad');
+  const phys = document.getElementById('phys');
+  const daily = document.getElementById('daily');
+  acad.innerHTML = ''; phys.innerHTML = ''; daily.innerHTML = '';
+
+  // Academic: use academicList order
+  academicList.forEach(([key,label])=>{
+    const m = baselines.metrics[key];
+    const row = document.createElement('div'); row.className='row';
+    const lab = document.createElement('label'); lab.style.minWidth='170px'; lab.textContent = m.label;
+    row.appendChild(lab);
+    const wrapper = document.createElement('div'); wrapper.innerHTML = makeInputFor(m);
+    row.appendChild(wrapper);
+    acad.appendChild(row);
+  });
+
+  // Physical
+  physicalList.forEach(key=>{
+    const m = baselines.metrics[key];
+    const row = document.createElement('div'); row.className='row';
+    const lab = document.createElement('label'); lab.style.minWidth='170px'; lab.textContent = m.label;
+    row.appendChild(lab);
+    const wrapper = document.createElement('div'); wrapper.innerHTML = makeInputFor(m);
+    row.appendChild(wrapper);
+    phys.appendChild(row);
+  });
+
+  // Daily
+  dailyList.forEach(key=>{
+    const m = baselines.metrics[key];
+    const row = document.createElement('div'); row.className='row';
+    const lab = document.createElement('label'); lab.style.minWidth='170px'; lab.textContent = m.label;
+    row.appendChild(lab);
+    const wrapper = document.createElement('div'); wrapper.innerHTML = makeInputFor(m);
+    row.appendChild(wrapper);
+    daily.appendChild(row);
+  });
+}
+buildSections();
+
+/* toggles */
+document.querySelectorAll('.sectionToggle').forEach(el=>{
+  el.addEventListener('click', ()=>{
+    const target = document.getElementById(el.dataset.target);
+    target.classList.toggle('open');
+  });
+});
+
+/* ---------------------------
+   Percentile helpers (robust)
+   --------------------------- */
+function percentileFromCDF(cdf, value){
+  if(!cdf) return 50;
+  if(!Array.isArray(cdf)) return Math.round((cdf||0)*100);
+  if(value <= cdf[0].t) return Math.round(cdf[0].p*100);
+  for(let i=1;i<cdf.length;i++){
+    if(value <= cdf[i].t){
+      const a=cdf[i-1], b=cdf[i];
+      const frac = (value - a.t) / ( (b.t - a.t) || 1 );
+      const p = a.p + frac*(b.p - a.p);
+      return Math.round(p*100);
+    }
+  }
+  return Math.round(cdf[cdf.length-1].p*100);
+}
+function educationPct(mapping, choice){
+  if(!mapping) return 50;
+  const prop = mapping[choice] !== undefined ? mapping[choice] : 0.5;
+  return Math.round(prop*100);
+}
+
+/* ---------------------------
+   Tiers/messages (10)
+   --------------------------- */
+const tiers = [
+  {range:[0,9], color:'#6b6b6b', league:'Obsidian', message:'Raw potential — now begins the work.'},
+  {range:[10,19], color:'#7f5f34', league:'Bronze V', message:'Small sparks — consistent moves will help.'},
+  {range:[20,29], color:'#b07a2b', league:'Bronze III', message:'Getting warmer — build routines.'},
+  {range:[30,39], color:'#b86b4a', league:'Silver VI', message:'Solid foundations — grow depth.'},
+  {range:[40,49], color:'#3d8fb6', league:'Silver III', message:'Above average — refine focus.'},
+  {range:[50,59], color:'#2bb39a', league:'Gold V', message:'Strong performer — lead in some areas.'},
+  {range:[60,69], color:'#6bd06b', league:'Gold II', message:'Very capable — mentor others.'},
+  {range:[70,79], color:'#9ee04a', league:'Platinum', message:'Impressive — you stand out.'},
+  {range:[80,89], color:'#ffb347', league:'Diamond', message:'Exceptional — notable achievements.'},
+  {range:[90,100], color:'#ffd400', league:'Legend', message:'Legendary — your work is memorable.'}
+];
+const extraBelow60 = "Tip: pick one area and invest 3 months of focused work — you'll see a noticeable change.";
+const extraBelow50 = "Important: treat this as a wake-up plan — 90 days of small daily improvements will compound.";
+
+/* ---------------------------
+   Calculation: produce per-metric percent and overall weighted mean
+   --------------------------- */
+let lastResults = null;
+
+function findBaseline(metricKey, gender, age){
+  const metric = baselines.metrics[metricKey];
+  if(!metric) return null;
+  // if metric has byGender/age arrays they could be used; for this simplified generator we use default
+  return metric.default || metric.defaultMapping || metric;
+}
+
+function calculateAll(){
+  const gender = document.getElementById('gender').value;
+  const age = Number(document.getElementById('age').value) || 0;
+  const metricsOut = {};
+  let totalWeighted = 0, weightSum = 0;
+
+  // iterate all metrics in baselines.metrics
+  Object.keys(baselines.metrics).forEach(key=>{
+    const m = baselines.metrics[key];
+    const el = document.getElementById('input_'+key);
+    let raw = null;
+    if(!el){
+      raw = (m.inputType === 'select' ? (m.options && m.options[0]) : 0);
+    } else {
+      raw = (m.inputType === 'number' ? Number(el.value || 0) : el.value);
+    }
+
+    const base = findBaseline(key, gender, age);
+    let pctAtOrBelow = 50;
+    let betterPct = 50;
+    if(m.key === 'education' || (m.defaultMapping)){
+      // education mapping
+      const mapping = m.defaultMapping || (base && base.mapping) || { none:0.24, secondary:0.7, bachelor:0.81, master:0.89, phd:0.975};
+      pctAtOrBelow = educationPct(mapping, raw);
+      betterPct = 100 - pctAtOrBelow;
+    } else if(m.inputType === 'select' && Array.isArray(base) && base.length === 1 && typeof base[0].p === 'number'){
+      // yes/no trait using probability p = proportion who have trait
+      const pPop = base[0].p || 0.5;
+      if(raw === 'yes') betterPct = Math.round((1 - pPop) * 100); else betterPct = Math.round(pPop * 100);
+    } else {
+      const cdf = Array.isArray(base) ? base : (m.default || null);
+      pctAtOrBelow = percentileFromCDF(cdf, Number(raw));
+      betterPct = 100 - pctAtOrBelow;
+    }
+
+    const weight = m.weight || 1;
+    totalWeighted += betterPct * weight;
+    weightSum += weight;
+    metricsOut[key] = { raw, pct: betterPct, weight };
+  });
+
+  const overall = weightSum ? Math.round(totalWeighted / weightSum) : 0;
+
+  // categories: compute means per category for tree display
+  const categoriesOut = (baselines.categories || []).map(cat=>{
+    let s=0, w=0;
+    cat.metrics.forEach(entry=>{
+      const mm = metricsOut[entry.k];
+      const ww = entry.w || 1;
+      if(mm){ s += mm.pct * ww; w += ww; }
+    });
+    return { name:cat.name, avg: w ? Math.round(s/w) : 0 };
+  });
+
+  lastResults = { gender, age, metrics:metricsOut, overall, categories: categoriesOut };
+  return lastResults;
+}
+
+/* ---------------------------
+   Rendering results
+   --------------------------- */
+const resultsPanel = document.getElementById('resultsPanel');
+const resultsList = document.getElementById('resultsList');
+const treeEl = document.getElementById('tree');
+const donutArc = document.getElementById('donutArc');
+const overallPctEl = document.getElementById('overallPct');
+const messageBox = document.getElementById('messageBox');
+const leagueBadge = document.getElementById('leagueBadge');
+
+function render(res){
+  resultsList.innerHTML = '';
+  treeEl.innerHTML = '';
+
+  // show metrics: we'll show all but collapse in scroll
+  Object.keys(res.metrics).forEach(key=>{
+    const mDef = baselines.metrics[key];
+    const r = res.metrics[key];
+    const wrapper = document.createElement('div'); wrapper.className='metricCard';
+    wrapper.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center">
+      <div><strong>${mDef.label}</strong><div class="small muted">value: <span>${r.raw}</span></div></div>
+      <div style="text-align:right"><div style="font-weight:900">${r.pct}%</div><div class="small muted">better than</div></div>
+    </div>
+    <div style="margin-top:8px" class="bar"><div class="bar-inner" style="width:0%;background:linear-gradient(90deg,#00e6ff,#ff2d95)" data-target="${r.pct}"></div></div>`;
+    resultsList.appendChild(wrapper);
+  });
+
+  // categories tree
+  res.categories.forEach(cat=>{
+    const node = document.createElement('div'); node.className='node';
+    node.style.padding='8px'; node.style.borderRadius='8px'; node.style.marginBottom='8px';
+    node.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><div><strong>${cat.name}</strong><div class="small muted">category</div></div>
+      <div style="text-align:right"><div class="small">Mean: <strong>${cat.avg}%</strong></div></div></div>
+      <div class="bar" style="margin-top:8px"><div class="bar-inner" style="width:${cat.avg}%;background:linear-gradient(90deg,#7dff8a,#00e6ff)"></div></div>`;
+    treeEl.appendChild(node);
+  });
+
+  // animate bars
+  setTimeout(()=> {
+    document.querySelectorAll('.bar-inner').forEach(el=>{
+      const target = el.getAttribute('data-target');
+      if(target) el.style.width = target + '%';
+    });
+  }, 120);
+
+  // donut
+  const percent = Math.max(0, Math.min(100, res.overall));
+  donutArc.setAttribute('stroke-dasharray', `${percent} ${100-percent}`);
+  overallPctEl.textContent = percent + '%';
+
+  // choose tier
+  const idx = Math.min(9, Math.floor(percent/10));
+  const tier = tiers[idx];
+  let msg = tier.message;
+  if(percent < 60) msg += '\n\n' + extraBelow60;
+  if(percent < 50) msg += '\n\n' + extraBelow50;
+  messageBox.textContent = msg;
+  messageBox.style.background = 'linear-gradient(90deg, rgba(255,255,255,0.02),' + hexToRgba(tier.color,0.03) + ')';
+  leagueBadge.textContent = 'League: ' + tier.league;
+  leagueBadge.style.color = tier.color;
+
+  // reveal panel
+  resultsPanel.classList.add('visible');
+  resultsPanel.scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+function hexToRgba(hex, a){
+  if(!hex) return `rgba(255,255,255,${a})`;
+  const h = hex.replace('#','');
+  const n = parseInt(h,16); const r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+/* ---------------------------
+   Button events: single Calculate & Show
+   --------------------------- */
+document.getElementById('calcShowBtn').addEventListener('click', ()=>{
+  // simple validation
+  const age = Number(document.getElementById('age').value) || 0;
+  if(age < 10){ alert('Please enter a valid age (>=10)'); return; }
+  const res = calculateAll();
+  render(res);
+});
+
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  // reset profile
+  document.getElementById('age').value = 30;
+  document.getElementById('gender').value = 'male';
+  // reset inputs to 0 or default select index 0
+  Object.keys(baselines.metrics).forEach(k=>{
+    const el = document.getElementById('input_'+k);
+    if(el){
+      if(el.tagName === 'SELECT') el.selectedIndex = 0;
+      else el.value = (el.type === 'number' ? 0 : '');
+    }
+  });
+  lastResults = null; resultsPanel.classList.remove('visible'); messageBox.textContent = 'No results yet.'; overallPctEl.textContent='0%';
+});
+
+/* ---------------------------
+   Download/Share snapshot
+   --------------------------- */
+async function generateSnapshot(res){
+  const W = 1200, H = 800;
+  const c = document.createElement('canvas'); c.width=W; c.height=H;
+  const ctx = c.getContext('2d');
+  // background
+  const g = ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#071122'); g.addColorStop(1,'#05060a');
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+  // title
+  ctx.fillStyle='#d8f5ff'; ctx.font='700 26px Inter, Arial'; ctx.fillText('AI-Tree • Your Specialty Report', 48, 48);
+  // donut large
+  const cx = 920, cy=180, r=130, th=28;
+  // bg ring
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.lineWidth=th; ctx.strokeStyle='rgba(255,255,255,0.03)'; ctx.stroke();
+  const pct = res.overall;
+  const angle = -Math.PI/2 + (2*Math.PI)*(pct/100);
+  const grad = ctx.createLinearGradient(cx-r,cy-r,cx+r,cy+r); grad.addColorStop(0,'#00e6ff'); grad.addColorStop(1,'#ff2d95');
+  ctx.strokeStyle = grad; ctx.beginPath(); ctx.arc(cx,cy,r,-Math.PI/2,angle); ctx.lineWidth=th; ctx.lineCap='round'; ctx.stroke();
+  ctx.fillStyle='#d8f5ff'; ctx.font='800 36px Inter, Arial'; ctx.textAlign='center'; ctx.fillText(pct + '%', cx, cy+12);
+  // message & league
+  const tierIdx = Math.min(9,Math.floor(pct/10)); const tier = tiers[tierIdx];
+  ctx.textAlign='left'; ctx.font='700 20px Inter, Arial'; ctx.fillStyle=tier.color; ctx.fillText(`League: ${tier.league}`, 48, 110);
+  ctx.font='600 16px Inter, Arial'; ctx.fillStyle='#cfeaff';
+  wrapTextCanvas(ctx, tier.message, 48, 140, 760, 20);
+  if(pct < 60){ ctx.fillStyle='#ffd7a6'; ctx.font='600 14px Inter, Arial'; wrapTextCanvas(ctx, extraBelow60,48,200,760,18);}
+  if(pct < 50){ ctx.fillStyle='#ffb3b3'; ctx.font='600 14px Inter, Arial'; wrapTextCanvas(ctx, extraBelow50,48,240,760,18);}
+
+  // top metrics (first 8)
+  ctx.font='600 14px Inter, Arial'; ctx.fillStyle='#d8f5ff';
+  const keys = Object.keys(res.metrics).slice(0,8);
+  let startY = 320;
+  keys.forEach((k,i)=>{
+    const m = baselines.metrics[k]; const rmt = res.metrics[k];
+    ctx.fillText(m.label, 48, startY + i*42);
+    // background
+    ctx.fillStyle='rgba(255,255,255,0.04)'; ctx.fillRect(48, startY + 10 + i*42, 720, 12);
+    // inner bar
+    const w = Math.round((rmt.pct/100)*720);
+    ctx.fillStyle='#00e6ff'; ctx.fillRect(48, startY + 10 + i*42, w, 12);
+    // pct label
+    ctx.fillStyle='#d8f5ff'; ctx.font='700 13px Inter, Arial'; ctx.fillText(rmt.pct + '%', 820, startY + 22 + i*42);
+    ctx.font='600 14px Inter, Arial';
+    ctx.fillStyle='#d8f5ff';
+  });
+
+  ctx.fillStyle='rgba(216,245,255,0.6)'; ctx.font='400 12px Inter, Arial'; ctx.fillText('Generated by AI-Tree • ' + new Date().toLocaleString(), 48, H - 24);
+  return new Promise(resolve => c.toBlob(b => resolve(b), 'image/png', 0.95));
+}
+
+function wrapTextCanvas(ctx, text, x, y, maxW, lh){
+  const words = text.split(' ');
+  let line=''; for(let n=0;n<words.length;n++){
+    const test = line + words[n] + ' '; const m = ctx.measureText(test);
+    if(m.width > maxW && n>0){ ctx.fillText(line, x, y); line = words[n] + ' '; y += lh; } else line = test;
+  } ctx.fillText(line, x, y);
+}
+
+document.getElementById('downloadBtn').addEventListener('click', async ()=>{
+  if(!lastResults){ alert('Please calculate first'); return; }
+  const blob = await generateSnapshot(lastResults);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = `ai-tree-${Date.now()}.png`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+});
+
+document.getElementById('shareBtn').addEventListener('click', async ()=>{
+  if(!lastResults){ alert('Please calculate first'); return; }
+  try{
+    const blob = await generateSnapshot(lastResults);
+    const file = new File([blob], `ai-tree-${Date.now()}.png`, { type:'image/png' });
+    if(navigator.canShare && navigator.canShare({ files:[file] })){ await navigator.share({ files:[file], title:'My AI-Tree Result', text:`I scored ${lastResults.overall}% on AI-Tree` }); return; }
+    // fallback download
+    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download = `ai-tree-${Date.now()}.png`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    alert('Saved image downloaded. Share it manually from your device.');
+  }catch(e){ console.warn(e); alert('Share not available — downloaded instead.'); }
+});
+
+/* ---------------------------
+   Demo defaults (so initial run shows non-zero)
+   --------------------------- */
+(function fillDemo(){
+  // small selection of defaults
+  const demoMap = {
+    pushups_max:12, pullups_max:1, run_5km_min:28, swim_pool_lengths:2, programming_languages:2,
+    publications:0, citations:0, h_index:0, reading_hours_day:1, walking_hours_day:0.5, screen_hours_day:3,
+    steps_per_day:5000, exercise_sessions_per_week:3
+  };
+  Object.keys(demoMap).forEach(k=>{
+    const el = document.getElementById('input_'+k);
+    if(el) el.value = demoMap[k];
+  });
+
+  // set selects defaults
+  ['education','literacy','tertiary','phd','research_role','internet_access'].forEach(k=>{
+    const el = document.getElementById('input_'+k); if(el) el.selectedIndex = 0;
+  });
+})();
+
+/* allow Enter to calculate */
+document.addEventListener('keydown', e=>{ if(e.key === 'Enter'){ document.getElementById('calcShowBtn').click(); } });
+
+</script>
+</body>
+</html>

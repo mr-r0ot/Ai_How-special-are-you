@@ -46,8 +46,6 @@ This design favors interpretability and reproducibility over black-box “myster
 ## 📊 Data & Validation
 
 * The project ships with compact, preprocessed statistical lookup tables (JSON) representing global distributions for selected features.
-* All data sources are documented in the `/data` folder (or `DATA-SOURCES.md`) and include provenance (source name, year, and the transformation steps used to generate percentiles).
-* You can replace or update data files to reflect newer sources — the engine will adapt without code changes.
 
 ---
 
@@ -64,28 +62,11 @@ This design favors interpretability and reproducibility over black-box “myster
 ### Option A — Open in browser
 
 1. Download or clone the repository.
-2. Open `desktop.html` (or `index.html`) in your browser.
+2. Open `index.html` in your browser.
 
-### Option B — Simple local HTTP server (recommended for modern browser features)
-
-```bash
-# Python 3
-python -m http.server 8000
-# then open http://localhost:8000 in your browser
-```
 
 ---
 
-## 🛠️ Configuration & Customization
-
-* **Feature definitions:** `/config/features.json` — define which user inputs map to which statistical fields.
-* **Decision rules:** `/model/tree.json` — a human-readable, versioned tree description used by the JS engine.
-* **UI text & copy:** `/i18n/en.json` — change labels, button text, and result phrasing.
-* **Visual theme:** edit `/css/variables.css` to alter colors, fonts, and spacing.
-
-Add new features by updating `features.json` and the tree rules; the engine includes a validation step that will show mismatches in the console.
-
----
 
 ## 📚 Example: Interpretable Result (sample)
 
@@ -103,21 +84,6 @@ Add new features by updating `features.json` and the tree rules; the engine incl
   ]
 }
 ```
-
----
-
-## 🧪 Testing & Quality
-
-* Unit tests for the tree evaluator are included under `/tests` (vanilla JS with a small custom runner). Run them by opening `/tests/index.html` in a browser.
-* The project includes sample test vectors in `/tests/vectors.json` to ensure determinism across browsers.
-
----
-
-## ♿ Accessibility
-
-* Semantic HTML and ARIA-friendly controls.
-* Keyboard-first navigation for all interactive elements.
-* High-contrast themes included in `/css/themes.css`.
 
 ---
 
